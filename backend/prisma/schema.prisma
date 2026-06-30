@@ -1,0 +1,164 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// USUÁRIOS
+// ============================================
+
+model User {
+  id          String   @id @default(cuid())
+  email       String   @unique
+  username    String   @unique
+  displayName String?
+  password    String
+  bio         String?
+  avatarUrl   String?
+  role        Role     @default(USER)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relações
+  characters     RpgCharacter[]
+  communityPosts CommunityPost[]
+  postLikes      PostLike[]
+
+  @@map("users")
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+// ============================================
+// RPG — FICHAS DE PERSONAGEM
+// ============================================
+
+model RpgCharacter {
+  id        String   @id @default(cuid())
+  userId    String
+  system    RpgSystem
+  name      String
+  data      Json     // Armazena todos os atributos da ficha como JSON
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("rpg_characters")
+}
+
+enum RpgSystem {
+  DND5E
+  TORMENTA20
+  CALL_OF_CTHULHU
+  ORDEM_PARANORMAL
+}
+
+// ============================================
+// QCD — JOGOS AVALIADOS
+// ============================================
+
+model QcdGame {
+  id             String       @id @default(cuid())
+  title          String
+  slug           String       @unique
+  coverUrl       String?
+  genres         String[]
+  platforms      String[]
+
+  // Scores
+  metacriticScore Int?
+  igdbRating      Float?
+  criticScore     Int?
+
+  // Tempo de gameplay (HowLongToBeat)
+  hoursMain      Float?
+  hoursComplete  Float?
+  hoursNote      String?
+
+  // Preços
+  priceUsd       Float?
+  priceBrl       Float?
+  storeUrl       String?
+
+  // QCD calculado
+  qcdScore       Float?
+  qcdCategory    QcdCategory?
+  avgScore       Float?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("qcd_games")
+}
+
+enum QcdCategory {
+  EXCELLENT
+  GOOD
+  REASONABLE
+  NOT_WORTH
+}
+
+// ============================================
+// COMUNIDADE — POSTS
+// ============================================
+
+model CommunityPost {
+  id        String    @id @default(cuid())
+  userId    String
+  type      PostType
+  title     String?
+  content   String?
+  imageUrl  String?
+  gameTitle String?
+  rating    Float?
+  likesCount Int      @default(0)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  user  User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  likes PostLike[]
+
+  @@map("community_posts")
+}
+
+enum PostType {
+  REVIEW
+  SCREENSHOT
+  ARTWORK
+  DISCUSSION
+}
+
+model PostLike {
+  id     String @id @default(cuid())
+  userId String
+  postId String
+
+  user User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post CommunityPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, postId])
+  @@map("post_likes")
+}
+
+// ============================================
+// PASSWORD RESET
+// ============================================
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  email     String
+  token     String   @unique
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@map("password_reset_tokens")
+}
