@@ -354,7 +354,7 @@ export default function MestrePage() {
         <div style={{
           display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
           textAlign: 'center', padding: '3rem 2rem', gap: '1rem',
-          background: 'rgba(124,58,237,0.04)',
+          background: 'rgba(124, 58, 237, 0.12)',
           border: '1px dashed rgba(124,58,237,0.2)',
           borderRadius: '20px',
         }}>
