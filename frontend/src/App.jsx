@@ -1,41 +1,61 @@
 import { useEffect } from 'react'
 import { Routes, Route } from 'react-router-dom'
-import Layout from './components/layout/Layout'
-import Dashboard from './components/pages/Dashboard'
-import NewsPage from './components/pages/NewsPage'
-import QcdPage from './components/pages/QcdPage'
-import ReviewsPage from './components/pages/ReviewsPage'
-import RpgPage from './components/pages/RpgPage'
-import ProfilePage from './components/pages/ProfilePage'
-import CommunityPage from './components/pages/CommunityPage'
-import MestrePage from './components/pages/MestrePage'
-import LoginPage from './components/pages/LoginPage'
-import RegisterPage from './components/pages/RegisterPage'
-import ForgotPasswordPage from './components/pages/ForgotPasswordPage'
-import ResetPasswordPage from './components/pages/ResetPasswordPage'
-import useThemeStore from './store/themeStore'
+
+import Layout from './components/Layout'
+
+// Páginas com layout completo (Navbar + Sidebar)
+import Home from './components/pages/Home'
+import Noticias from './components/pages/Noticias'
+import QcdScore from './components/pages/QcdScore'
+import Reviews from './components/pages/Reviews'
+import Rpg from './components/pages/Rpg'
+import Mestre from './components/pages/Mestre'
+import Perfil from './components/pages/Perfil'
+import Comunidade from './components/pages/Comunidade'
+
+// Novas Páginas de e-Sports com o estilo Pro Lobby
+import HomeNoticias from './components/pages/HomeNoticias'
+import Partidas from './components/pages/Partidas'
+import Times from './components/pages/Times'
+
+// Páginas de autenticação (sem Navbar/Sidebar)
+import Login from './components/pages/Login'
+import Cadastro from './components/pages/Cadastro'
+import EsqueciSenha from './components/pages/EsqueciSenha'
+import RedefinirSenha from './components/pages/RedefinirSenha'
 
 export default function App() {
+  // Aplica o tema salvo no localStorage assim que o app carrega.
+  // O tema é 'dark' ou 'light' — adicionamos a classe no <html>.
   useEffect(() => {
-    useThemeStore.getState().initTheme()
+    const temaSalvo = localStorage.getItem('hg_theme') || 'dark'
+    document.documentElement.classList.add(temaSalvo)
   }, [])
 
   return (
     <Routes>
-      <Route path="/login"           element={<LoginPage />} />
-      <Route path="/register"        element={<RegisterPage />} />
-      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-      <Route path="/reset-password"  element={<ResetPasswordPage />} />
+      {/* Páginas de autenticação — sem o layout geral */}
+      <Route path="/login"           element={<Login />} />
+      <Route path="/register"         element={<Cadastro />} />
+      <Route path="/forgot-password"  element={<EsqueciSenha />} />
+      <Route path="/reset-password"   element={<RedefinirSenha />} />
 
+      {/* Páginas principais — dentro do Layout (Navbar + Sidebar) */}
       <Route path="/" element={<Layout />}>
-        <Route index            element={<Dashboard />} />
-        <Route path="news"      element={<NewsPage />} />
-        <Route path="qcd"       element={<QcdPage />} />
-        <Route path="reviews"   element={<ReviewsPage />} />
-        <Route path="rpg"       element={<RpgPage />} />
-        <Route path="mestre"    element={<MestrePage />} />
-        <Route path="perfil"    element={<ProfilePage />} />
-        <Route path="community" element={<CommunityPage />} />
+        {/* Sub-rotas usando paths relativos e limpos */}
+        <Route index              element={<Home />} />
+        <Route path="news"        element={<Noticias />} />
+        <Route path="qcd"         element={<QcdScore />} />
+        <Route path="reviews"     element={<Reviews />} />
+        <Route path="rpg"         element={<Rpg />} />
+        <Route path="mestre"      element={<Mestre />} />
+        <Route path="perfil"      element={<Perfil />} />
+        <Route path="community"   element={<Comunidade />} />
+        
+        {/* Seção e-Sports integradas perfeitamente ao Layout */}
+        <Route path="esports"     element={<HomeNoticias />} />
+        <Route path="matches"     element={<Partidas />} />
+        <Route path="teams"       element={<Times />} />
       </Route>
     </Routes>
   )

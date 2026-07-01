@@ -1,12 +1,21 @@
+// pages/Cadastro.jsx
+//
+// O que foi simplificado:
+// - useAuthStore (Zustand) → useAuth() do nosso contexto
+// - toast.success() removido: o navigate('/') após cadastro é feedback suficiente.
+//   O usuário vê instantaneamente que entrou no sistema (Navbar mostra o nome).
+// - Import paths atualizados (era ../../services/api, agora ../services/api)
+
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import api from '../../services/api'
-import useAuthStore from '../../store/authStore'
-import toast from '../ui/Toast'
+import { useAuth } from '../../contexts/AuthContext'
 
-// Field FORA do componente — nunca é recriado
-function Field({ name, value, onChange, label, type = 'text', placeholder, required, hint, showPass, onTogglePass }) {
-  const isPass = name === 'password' || name === 'confirm'
+// Definido FORA do componente para não ser recriado a cada render.
+// Se ficasse dentro de Cadastro(), o React recriaria o componente <Field>
+// a cada keystroke, fazendo o input perder o foco. Isso foi um bug real no projeto.
+function Field({ name, value, onChange, label, type = 'text', placeholder, required, hint, mostrarSenha, onToggleSenha }) {
+  const isSenha = name === 'password' || name === 'confirm'
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
       <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'rgba(240,238,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
@@ -14,19 +23,19 @@ function Field({ name, value, onChange, label, type = 'text', placeholder, requi
       </label>
       <div style={{ position: 'relative' }}>
         <input
-          type={isPass ? (showPass ? 'text' : 'password') : type}
+          type={isSenha ? (mostrarSenha ? 'text' : 'password') : type}
           name={name}
           value={value}
           onChange={onChange}
           placeholder={placeholder}
           required={required}
           className="input"
-          style={isPass ? { paddingRight: '2.75rem' } : {}}
+          style={isSenha ? { paddingRight: '2.75rem' } : {}}
         />
         {name === 'password' && (
-          <button type="button" onClick={onTogglePass}
+          <button type="button" onClick={onToggleSenha}
             style={{ position: 'absolute', right: '0.75rem', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-dark-text-3)', fontSize: '14px', lineHeight: 0, padding: '4px' }}>
-            {showPass ? '🙈' : '👁️'}
+            {mostrarSenha ? '🙈' : '👁️'}
           </button>
         )}
       </div>
@@ -35,23 +44,37 @@ function Field({ name, value, onChange, label, type = 'text', placeholder, requi
   )
 }
 
-export default function RegisterPage() {
-  const { login } = useAuthStore()
+export default function Cadastro() {
+  const { login } = useAuth()
   const navigate = useNavigate()
+
   const [form, setForm] = useState({ email: '', username: '', displayName: '', password: '', confirm: '' })
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
-  const [showPass, setShowPass] = useState(false)
+  const [carregando, setCarregando] = useState(false)
+  const [erro, setErro] = useState('')
+  const [mostrarSenha, setMostrarSenha] = useState(false)
 
-  const handleChange = (e) => setForm(f => ({ ...f, [e.target.name]: e.target.value }))
+  function handleChange(e) {
+    setForm(f => ({ ...f, [e.target.name]: e.target.value }))
+  }
 
-  const handleSubmit = async (e) => {
+  async function handleSubmit(e) {
     e.preventDefault()
-    setError('')
-    if (!form.email || !form.username || !form.password) { setError('Preencha todos os campos obrigatórios'); return }
-    if (form.password !== form.confirm) { setError('As senhas não coincidem'); return }
-    if (form.password.length < 6) { setError('A senha deve ter pelo menos 6 caracteres'); return }
-    setLoading(true)
+    setErro('')
+
+    if (!form.email || !form.username || !form.password) {
+      setErro('Preencha todos os campos obrigatórios')
+      return
+    }
+    if (form.password !== form.confirm) {
+      setErro('As senhas não coincidem')
+      return
+    }
+    if (form.password.length < 6) {
+      setErro('A senha deve ter pelo menos 6 caracteres')
+      return
+    }
+
+    setCarregando(true)
     try {
       const res = await api.post('/auth/register', {
         email: form.email,
@@ -60,18 +83,18 @@ export default function RegisterPage() {
         password: form.password,
       })
       login(res.data.user, res.data.token)
-      toast.success('Conta criada! Bem-vindo ao ProLobby 🎮')
       navigate('/')
     } catch (err) {
-      setError(err.response?.data?.error || 'Erro ao criar conta')
+      setErro(err.response?.data?.error || 'Erro ao criar conta')
     } finally {
-      setLoading(false)
+      setCarregando(false)
     }
   }
 
   return (
     <div style={{
-      minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center',
+      minHeight: '100vh',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
       background: 'linear-gradient(135deg, #060610 0%, #0d0d1a 50%, #060610 100%)',
       padding: '1.5rem', position: 'relative', overflow: 'hidden',
     }}>
@@ -97,22 +120,22 @@ export default function RegisterPage() {
           <p style={{ fontSize: '0.8rem', color: 'rgba(240,238,255,0.45)' }}>Junte-se ao ProLobby</p>
         </div>
 
-        {error && (
+        {erro && (
           <div style={{ marginBottom: '1.25rem', padding: '0.75rem 1rem', borderRadius: '12px', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.25)', color: '#f87171', fontSize: '0.82rem', display: 'flex', gap: '0.5rem' }}>
-            <span>⚠️</span><span>{error}</span>
+            <span>⚠️</span><span>{erro}</span>
           </div>
         )}
 
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
-          <Field name="email"       value={form.email}       onChange={handleChange} label="Email"              type="email" placeholder="seu@email.com"         required />
-          <Field name="username"    value={form.username}    onChange={handleChange} label="Username"                        placeholder="gamer123"               required hint="Será seu identificador único" />
+          <Field name="email"       value={form.email}       onChange={handleChange} label="Email"              type="email" placeholder="seu@email.com"           required />
+          <Field name="username"    value={form.username}    onChange={handleChange} label="Username"                        placeholder="gamer123"                 required hint="Será seu identificador único" />
           <Field name="displayName" value={form.displayName} onChange={handleChange} label="Nome de exibição"               placeholder="Seu nome público (opcional)" />
-          <Field name="password"    value={form.password}    onChange={handleChange} label="Senha"              type="password" placeholder="Min. 6 caracteres"  required showPass={showPass} onTogglePass={() => setShowPass(s => !s)} />
-          <Field name="confirm"     value={form.confirm}     onChange={handleChange} label="Confirmar senha"    type="password" placeholder="Repita a senha"      required showPass={showPass} />
+          <Field name="password"    value={form.password}    onChange={handleChange} label="Senha"              type="password" placeholder="Min. 6 caracteres"    required mostrarSenha={mostrarSenha} onToggleSenha={() => setMostrarSenha(s => !s)} />
+          <Field name="confirm"     value={form.confirm}     onChange={handleChange} label="Confirmar senha"    type="password" placeholder="Repita a senha"        required mostrarSenha={mostrarSenha} />
 
-          <button type="submit" disabled={loading} className="btn btn-primary"
+          <button type="submit" disabled={carregando} className="btn btn-primary"
             style={{ width: '100%', padding: '0.8rem', fontSize: '0.9rem', marginTop: '0.5rem' }}>
-            {loading ? (
+            {carregando ? (
               <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <span style={{ width: '16px', height: '16px', border: '2px solid rgba(255,255,255,0.3)', borderTopColor: 'white', borderRadius: '50%', animation: 'spin 0.6s linear infinite', display: 'inline-block' }} />
                 Criando conta...

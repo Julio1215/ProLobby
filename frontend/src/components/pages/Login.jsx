@@ -1,33 +1,47 @@
+// pages/Login.jsx
+//
+// O que foi simplificado:
+// - useAuthStore (Zustand) → useAuth() do nosso contexto
+// - toast.success() removido: após login bem-sucedido, o app navega direto
+//   para a Home onde o usuário já vê seu nome. Não precisa de toast.
+// - Import path de api atualizado (era ../../services/api)
+
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import api from '../../services/api'
-import useAuthStore from '../../store/authStore'
-import toast from '../ui/Toast'
+import { useAuth } from '../../contexts/AuthContext'
 
-export default function LoginPage() {
-  const { login } = useAuthStore()
+export default function Login() {
+  const { login } = useAuth()
   const navigate = useNavigate()
+
   const [form, setForm] = useState({ login: '', password: '' })
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
-  const [showPass, setShowPass] = useState(false)
+  const [carregando, setCarregando] = useState(false)
+  const [erro, setErro] = useState('')
+  const [mostrarSenha, setMostrarSenha] = useState(false)
 
-  const handleChange = (e) => setForm(f => ({ ...f, [e.target.name]: e.target.value }))
+  function handleChange(e) {
+    setForm(f => ({ ...f, [e.target.name]: e.target.value }))
+  }
 
-  const handleSubmit = async (e) => {
+  async function handleSubmit(e) {
     e.preventDefault()
-    setError('')
-    if (!form.login || !form.password) { setError('Preencha todos os campos'); return }
-    setLoading(true)
+    setErro('')
+
+    if (!form.login || !form.password) {
+      setErro('Preencha todos os campos')
+      return
+    }
+
+    setCarregando(true)
     try {
       const res = await api.post('/auth/login', form)
       login(res.data.user, res.data.token)
-      toast.success('Login realizado! Bem-vindo de volta 👾')
       navigate('/')
     } catch (err) {
-      setError(err.response?.data?.error || 'Erro ao fazer login')
+      setErro(err.response?.data?.error || 'Erro ao fazer login')
     } finally {
-      setLoading(false)
+      setCarregando(false)
     }
   }
 
@@ -42,10 +56,11 @@ export default function LoginPage() {
       position: 'relative',
       overflow: 'hidden',
     }}>
-      {/* Background blobs */}
+      {/* Bolas de luz decorativas de fundo */}
       <div style={{ position: 'fixed', top: '-100px', left: '-100px', width: '400px', height: '400px', borderRadius: '50%', background: 'rgba(124,58,237,0.12)', filter: 'blur(80px)', pointerEvents: 'none' }} />
       <div style={{ position: 'fixed', bottom: '-80px', right: '-80px', width: '350px', height: '350px', borderRadius: '50%', background: 'rgba(191,0,255,0.08)', filter: 'blur(80px)', pointerEvents: 'none' }} />
 
+      {/* Card do formulário */}
       <div style={{
         width: '100%',
         maxWidth: '420px',
@@ -70,22 +85,14 @@ export default function LoginPage() {
           }}>
             🎮
           </div>
-          <h1 style={{
-            fontFamily: 'var(--font-orbitron)',
-            fontSize: '1.5rem',
-            fontWeight: 900,
-            color: 'white',
-            marginBottom: '0.3rem',
-          }}>
+          <h1 style={{ fontFamily: 'var(--font-orbitron)', fontSize: '1.5rem', fontWeight: 900, color: 'white', marginBottom: '0.3rem' }}>
             PRO<span style={{ color: 'var(--color-brand-light)' }}>LOBBY</span>
           </h1>
-          <p style={{ fontSize: '0.82rem', color: 'rgba(240,238,255,0.5)' }}>
-            Entre na sua conta gamer
-          </p>
+          <p style={{ fontSize: '0.82rem', color: 'rgba(240,238,255,0.5)' }}>Entre na sua conta gamer</p>
         </div>
 
-        {/* Error */}
-        {error && (
+        {/* Mensagem de erro */}
+        {erro && (
           <div style={{
             marginBottom: '1.25rem',
             padding: '0.75rem 1rem',
@@ -94,16 +101,14 @@ export default function LoginPage() {
             border: '1px solid rgba(239, 68, 68, 0.25)',
             color: '#f87171',
             fontSize: '0.82rem',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.5rem',
+            display: 'flex', alignItems: 'center', gap: '0.5rem',
           }}>
             <span>⚠️</span>
-            <span>{error}</span>
+            <span>{erro}</span>
           </div>
         )}
 
-        {/* Form */}
+        {/* Formulário */}
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
             <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'rgba(240,238,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
@@ -133,7 +138,7 @@ export default function LoginPage() {
             </div>
             <div style={{ position: 'relative' }}>
               <input
-                type={showPass ? 'text' : 'password'}
+                type={mostrarSenha ? 'text' : 'password'}
                 name="password"
                 value={form.password}
                 onChange={handleChange}
@@ -145,25 +150,25 @@ export default function LoginPage() {
               />
               <button
                 type="button"
-                onClick={() => setShowPass(s => !s)}
+                onClick={() => setMostrarSenha(s => !s)}
                 style={{
                   position: 'absolute', right: '0.75rem', top: '50%', transform: 'translateY(-50%)',
                   background: 'none', border: 'none', cursor: 'pointer',
                   color: 'var(--color-dark-text-3)', fontSize: '14px', lineHeight: 0, padding: '4px',
                 }}
               >
-                {showPass ? '🙈' : '👁️'}
+                {mostrarSenha ? '🙈' : '👁️'}
               </button>
             </div>
           </div>
 
           <button
             type="submit"
-            disabled={loading}
+            disabled={carregando}
             className="btn btn-primary"
             style={{ width: '100%', padding: '0.8rem', fontSize: '0.9rem', marginTop: '0.5rem' }}
           >
-            {loading ? (
+            {carregando ? (
               <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <span style={{ width: '16px', height: '16px', border: '2px solid rgba(255,255,255,0.3)', borderTopColor: 'white', borderRadius: '50%', animation: 'spin 0.6s linear infinite', display: 'inline-block' }} />
                 Entrando...
@@ -172,7 +177,6 @@ export default function LoginPage() {
           </button>
         </form>
 
-        {/* Footer */}
         <p style={{ textAlign: 'center', marginTop: '1.5rem', fontSize: '0.82rem', color: 'rgba(240,238,255,0.45)' }}>
           Não tem conta?{' '}
           <Link to="/register" style={{ color: 'var(--color-brand-light)', fontWeight: 700, textDecoration: 'none' }}

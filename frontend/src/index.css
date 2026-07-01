@@ -87,19 +87,20 @@
     color-scheme: light;
   }
 
-body {
-  font-family: var(--font-sans);
-  background: linear-gradient(180deg, #0f172a 0%, #2e1065 50%, #020617 100%);
-  background-attachment: fixed;
-  color: var(--color-dark-text-1);
-  min-height: 100vh;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  overflow-x: hidden;
-}
+  body {
+    font-family: var(--font-sans);
+    background: linear-gradient(180deg, #0f172a 0%, #2e1065 50%, #020617 100%);
+    background-attachment: fixed;
+    color: var(--color-dark-text-1);
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
+  }
 
+  /* CORREÇÃO 1: 'background' limpa o gradiente do modo escuro */
   html.light body {
-    background-color: var(--color-light-base);
+    background: var(--color-light-base);
     color: var(--color-light-text-1);
   }
 
@@ -131,7 +132,6 @@ body {
    UTILITIES
 ========================= */
 @layer utilities {
-
   /* Glow effects */
   .glow-brand {
     box-shadow: 0 0 14px rgba(124, 58, 237, 0.25), 0 0 30px rgba(124, 58, 237, 0.08);
@@ -293,7 +293,6 @@ body {
    COMPONENT STYLES
 ========================= */
 @layer components {
-
   /* --- Skeleton loader --- */
   .skeleton {
     background: linear-gradient(
@@ -607,11 +606,12 @@ html.light ::-webkit-scrollbar-thumb {
 }
 
 /* ===========================
-   LIGHT THEME — forçar fundo e texto
+   LIGHT THEME — Forçar elementos estruturais
 =========================== */
+/* CORREÇÃO 2: Alterado background-color para background para anular o gradiente escuro */
 html.light body {
-  background-color: #f0eeff;
-  color: #1a1040;
+  background: #f0eeff !important;
+  color: #1a1040 !important;
 }
 
 html.light .card,
@@ -620,6 +620,11 @@ html.light nav {
   background-color: #ffffff !important;
   border-color: #c4b5fd !important;
   color: #1a1040 !important;
+}
+
+html.light nav {
+  background: rgba(255, 255, 255, 0.9) !important;
+  border-bottom-color: #c4b5fd !important;
 }
 
 html.light .input {
@@ -649,7 +654,7 @@ html.light .skeleton {
 }
 
 /* ===========================
-   LIGHT THEME — redefine todas as variáveis
+   LIGHT THEME — Mapeamento das variáveis internas
 =========================== */
 html.light {
   --color-dark-base:      #f0eeff;
@@ -663,12 +668,13 @@ html.light {
   --color-dark-text-3:    #6d28d9;
 }
 
-html.light body {
-  background-color: #f0eeff;
-  color: #1a1040;
-}
-
-html.light nav {
-  background: rgba(255, 255, 255, 0.9) !important;
-  border-bottom-color: #c4b5fd !important;
+/* =======================================================
+   FORÇAR O FUNDO DO CONTEÚDO PRINCIPAL NO MODO CLARO
+======================================================= */
+html.light main,
+html.light #root > div,
+html.light .main-content {
+  background: #f0eeff !important;
+  background-image: none !important;
+  color: #1a1040 !important;
 }

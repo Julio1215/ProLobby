@@ -282,34 +282,29 @@ const calculateQcd = async (gameTitle) => {
 };
 
 // Ranking dos melhores QCDs salvos no banco
+// Ranking dos melhores QCDs salvos no banco
 const getQcdRanking = async (limit) => {
-  limit = limit || 20;
-  await prisma.qcdGame.upsert({
-  where:  { slug: result.slug || String(rating.igdbId) },
-  create: {
-    title:          result.title,
-    slug:           result.slug || String(rating.igdbId),
-    coverUrl:       result.coverUrl,
-    platforms:      result.platforms,
-    genres:         result.genres,
-    igdbRating:     result.igdbRating,
-    criticScore:    result.criticScore,
-    hoursMain:      result.hoursMain,
-    hoursComplete:  result.hoursComplete,
-    priceUsd:       result.priceUsd,
-    priceBrl:       result.priceBrl,
-    storeUrl:       result.storeUrl,
-    qcdScore:       result.qcdScore,
-    qcdCategory:    result.qcdCategory,
-    avgScore:       result.avgScore,
-  },
-  update: {
-    priceUsd:    result.priceUsd,
-    priceBrl:    result.priceBrl,
-    qcdScore:    result.qcdScore,
-    qcdCategory: result.qcdCategory,
-  },
-});
+  try {
+    const rankingLimit = limit || 20;
+
+    // Busca os jogos com maior qcdScore que possuem dados válidos
+    const ranking = await prisma.qcdGame.findMany({
+      where: {
+        qcdScore: {
+          not: null,
+        },
+      },
+      orderBy: {
+        qcdScore: 'desc', // Traz os maiores scores primeiro
+      },
+      take: rankingLimit,
+    });
+
+    return ranking;
+  } catch (err) {
+    console.error('[QCD] Erro ao buscar ranking:', err.message);
+    throw err;
+  }
 };
 
 module.exports = { calculateQcd, getQcdRanking, getQcdLabel, getQcdCategory };
